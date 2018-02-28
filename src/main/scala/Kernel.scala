@@ -2,7 +2,7 @@ package bot
 
 object Main {
 
-  val bot: Bot = new RandomBot
+  val bot: Bot = new BasicBot
 
   def main(args: Array[String]) = makeServer match {
     case Left(error) ⇒ println(error)
@@ -70,7 +70,7 @@ object Main {
   }
 
   def makeServer = (
-    Option(System.getProperty("server")) getOrElse "http://vindinium.org/",
+    Option(System.getProperty("server")) getOrElse "http://localhost:9000/",
     System.getProperty("key")
   ) match {
       case (_, null)  ⇒ Left("Specify the user key with -Dkey=mySecretKey")
