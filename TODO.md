@@ -1,0 +1,4 @@
+- [x] Remove mine from path when traveling to Tavern
+- [x] Alter path if it contains hero with HP more than hero
+- [x] Compute real paths to mines / taverns
+- [x] Change destination when no path exists to current target

@@ -23,6 +23,8 @@ case class Pos(x: Int, y: Int) {
   def isIn(size: Int) = (x >= 0 && x < size && y >= 0 && y < size)
 }
 
+case class PosDistanceToHero(pos: Pos, distance: Int)
+
 sealed trait Tile
 object Tile {
   case object Air extends Tile
@@ -45,10 +47,12 @@ case class PositionedBoard(size: Int, positionedTiles: List[PositionedTile]) {
   def at(pos: Pos): Option[PositionedTile] =
     if (pos isIn size) positionedTiles.reverse lift (pos.x * size + pos.y) else None
 
-  def otherMines(heroId: Int): List[Pos] = {
+  val taverns: List[Pos] = positionedTiles.filter(_.tile == Tavern) map { _.pos }
+
+  def otherMines(heroes: List[Hero]): List[Pos] = {
     def loop(acc: List[Pos], pt: List[PositionedTile]): List[Pos] = pt match {
       case PositionedTile(Mine(None), pos) :: xs => loop(pos :: acc, xs)
-      case PositionedTile(Mine(Some(id)), pos) :: xs if id != heroId => loop(pos :: acc, xs)
+      case PositionedTile(Mine(Some(id)), pos) :: xs if !heroes.exists(_.id == id) => loop(pos :: acc, xs)
       case x::xs => loop(acc, xs)
       case Nil => acc
     }
@@ -56,24 +60,23 @@ case class PositionedBoard(size: Int, positionedTiles: List[PositionedTile]) {
     loop(List(), positionedTiles)
   }
 
-  def closestPositionToCurrentPos(pos: Pos, others: List[Pos]): Pos = {
+  def closestPositionToCurrentPos(pos: Pos, others: List[Pos]): Option[Pos] = {
+    if (others.isEmpty) None
+
     val weightedPositions: List[(Pos, Int)] = others map { nmp: Pos =>
       (nmp, Math.abs(pos.x - nmp.x) + Math.abs(pos.y - nmp.y))
     }
 
-    others.foldRight(others.head)((p: Pos, minP: Pos) => {
+    val close = others.foldRight(others.head)((p: Pos, minP: Pos) => {
         val weight = Math.abs(pos.x - p.x) + Math.abs(pos.y - p.y)
         val minPWeight = Math.abs(pos.x - minP.x) + Math.abs(pos.y - minP.y)
 
         if (weight < minPWeight) p else minP
     })
+
+    Some(close)
   }
 
-  def closestTavernTo(pos: Pos): Pos = {
-    val taverns: List[Pos] = positionedTiles.filter(_.tile == Tavern) map { _.pos }
-
-    closestPositionToCurrentPos(pos, taverns)
-  }
 
 }
 
@@ -94,6 +97,21 @@ object PositionedBoard {
 
       PositionedTile(t, nextPos) :: b
     })
+}
+
+case class ScoredPos(pos: Pos, g: Int, h: Int, parent: Option[ScoredPos] = None) {
+  val f: Int = g + h
+
+  val pathLength: Int = {
+    def loop(path: Option[ScoredPos], length: Int): Int = path match {
+      case Some(p) => loop(p.parent, length + 1)
+      case _ => length
+    }
+
+    loop(Some(this), -1)
+  }
+
+  val nextPos: Option[Pos] = parent map { _.pos }
 }
 
 case class Hero(
