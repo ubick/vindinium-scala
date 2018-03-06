@@ -14,43 +14,61 @@ class BasicBot extends Bot {
 
   override def move(input: Input): Dir = {
     object Game {
+      val otherHeroesFilter: Hero => Boolean = (hero: Hero) => List("Ubick", "Liviu").exists(hero.name !=)
       val startTime: Long = System.nanoTime
       val minLifeBeforeTavern = 25
       val hero: Hero = input.hero
       val board: Board = input.game.board
       val positionedBoard: PositionedBoard = PositionedBoard(board.size, PositionedBoard.positionedTiles(board))
       val taverns: List[Pos] = positionedBoard.taverns
-      val mines: List[Pos] = positionedBoard.otherMines(input.game.heroes.filter(h => h.name == "Ubick" || h.name == "Liviu"))
+      val mines: List[Pos] = positionedBoard.otherMinesPositions(hero)
+      val heroes: List[Pos] = input.game.heroes filterNot {_.id == hero.id} map { _.pos }
 
       val play: Dir = {
-        val closestMine: Option[ScoredPos] = closestObjective(mines)
-        val closestTavern: Option[ScoredPos] = closestObjective(taverns)
+        val mineObjective: Option[ScoredPos] = closestObjective(mines)
+        val tavernObjective: Option[ScoredPos] = closestObjective(taverns)
+        val heroObjective: Option[ScoredPos] = closestObjective(heroes)
+        val closestHeroRef: Hero = input.game.heroes filter {_.pos == heroObjective.get.objectivePos.pos} head
 
         // this might crash, but we should always have taverns
         // If tavern is next to us and life is below 100, then move towards it
-        println(s"Tavern path lentgh ${closestTavern.get.pathLength}")
-        if (closestTavern.get.pathLength == 1 && hero.life < 95) {
-          println("life is below 100, I should move to closest tavern")
-          moveTowardsClosestObjective(closestTavern)
+        if (tavernObjective.get.pathLength == 1 && hero.life < 95) {
+          moveTowardsClosestObjective(tavernObjective)
         } else {
-          closestMine match {
-            // Head towards a tavern if there's no mine left to conquer
-            case None => moveTowardsClosestObjective(closestTavern)
-            case Some(sp) => {
-              val requiredLifeToReachMine = minLifeBeforeTavern + sp.pathLength
+          mineObjective match {
+              // Head towards a tavern if there's no mine left to conquer
+              case None => moveTowardsClosestObjective(tavernObjective)
+              case Some(sp) => {
+                // only attack heroes that are closer to us than the nearest mine and own at least 1 mine
+                if (heroObjective.get.pathLength <= 4 &&
+                  heroObjective.get.pathLength <= sp.pathLength &&
+                  positionedBoard.positionedTiles.exists(_.tile == Mine(Some(closestHeroRef.id))) &&
+                  closestHeroRef.pos != closestHeroRef.spawnPos
+                ) {
+                  if (hero.life > closestHeroRef.life + 1) {
+                    println(s"Moving towards closest hero")
+                    // Attack weak hero close to current position
+                    moveTowardsClosestObjective(heroObjective)
+                  } else {
+                    // Run away from strong hero close to current position
+                    println(s"Running away from closest hero to closest tavern")
+                    moveTowardsClosestObjective(tavernObjective)
+                  }
 
-              if (hero.life < requiredLifeToReachMine) {
-                // Move towards tavern if life is insufficient to travel and conquer nearest tavern
-                moveTowardsClosestObjective(closestTavern)
-              } else {
-                // Move towards mine if life is sufficient
-                nextDir(sp.nextPos)
+                } else {
+                  val requiredLifeToReachMine = minLifeBeforeTavern + sp.pathLength
+
+                  if (hero.life < requiredLifeToReachMine) {
+                    // Move towards tavern if life is insufficient to travel and conquer nearest tavern
+                    moveTowardsClosestObjective(tavernObjective)
+                  } else {
+                    // Move towards mine if life is sufficient
+                    moveTowardsClosestObjective(mineObjective)
+                  }
               }
             }
           }
         }
-
-
       }
 
       def closestObjective(objectives: List[Pos]): Option[ScoredPos] = multiGoalPathFind(objectives, input.hero.pos)
@@ -91,19 +109,20 @@ class BasicBot extends Bot {
         // Can't walk via walls and own mines
         case Wall | Mine(Some(hero.id)) => false
         // Don't attack mines while walking towards a tavern to restore health
-        case Mine(_) if positionedBoard.at(destination) exists {
-          _.tile == Tavern
-        } => false
+        case Mine(_) if positionedBoard.at(destination) exists {_.tile == Tavern} => false
         // Avoid heroes if they have more life
-        case Tile.Hero(_) if heroFromTile(t).exists(_.life >= hero.life + 1) => false
+        case Tile.Hero(_) if positionedBoard.at(destination) exists {!_.tile.isInstanceOf[Tile.Hero]} => false
         // Camp at a tavern if there's no mine to capture
         case Tavern if mines.isEmpty => true
         // Avoid Taverns if life is max
-        case Tavern if hero.life < 95 => false
+        case Tavern if hero.life < 95 && hero.gold >= 2 => false
+        // Don't attempt to walk via Taverns when chasing a hero or mine
+        case Tavern if positionedBoard.at(destination) exists {pt => pt.tile.isInstanceOf[Tile.Hero] || pt.tile.isInstanceOf[Tile.Mine]} => false
         case _ => true
       }
 
       def moveTowardsClosestObjective(objective: Option[ScoredPos]): Dir = {
+        print(s"Moving via ${positionedBoard.at(objective.get.parent.get.pos).get} towards ${positionedBoard at objective.get.objectivePos.pos get}")
         val dir: Option[Dir] = for {
           o <- objective
           dir = nextDir(o.nextPos)
