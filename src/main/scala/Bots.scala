@@ -14,25 +14,29 @@ class BasicBot extends Bot {
 
   override def move(input: Input): Dir = {
     object Game {
-      val otherHeroesFilter: Hero => Boolean = (hero: Hero) => List("Ubick", "Liviu").exists(hero.name !=)
+      val myHeroFilter: Hero => Boolean = (hero: Hero) => List("Ubick", "Liviu", "Oana").exists(hero.name ==)
       val startTime: Long = System.nanoTime
-      val minLifeBeforeTavern = 25
+      val minLifeBeforeTavern = 41
       val hero: Hero = input.hero
       val board: Board = input.game.board
       val positionedBoard: PositionedBoard = PositionedBoard(board.size, PositionedBoard.positionedTiles(board))
+      val enemyHeroesTiles: List[PositionedTile] = positionedBoard.positionedTiles filter { pt => input.game.heroes.filterNot(myHeroFilter).map {_.pos} contains pt.pos }
       val taverns: List[Pos] = positionedBoard.taverns
-      val mines: List[Pos] = positionedBoard.otherMinesPositions(hero)
-      val heroes: List[Pos] = input.game.heroes filterNot {_.id == hero.id} map { _.pos }
+      val enemyHeroes: List[Hero] = input.game.heroes filterNot myHeroFilter
+      val mines: List[Pos] = positionedBoard.otherMinesPositions(enemyHeroes)
+      val enemyHeroesPositions: List[Pos] = input.game.heroes filterNot myHeroFilter map { _.pos }
 
       val play: Dir = {
         val mineObjective: Option[ScoredPos] = closestObjective(mines)
         val tavernObjective: Option[ScoredPos] = closestObjective(taverns)
-        val heroObjective: Option[ScoredPos] = closestObjective(heroes)
+        val heroObjective: Option[ScoredPos] = closestObjective(enemyHeroesPositions)
         val closestHeroRef: Hero = input.game.heroes filter {_.pos == heroObjective.get.objectivePos.pos} head
 
-        // this might crash, but we should always have taverns
+        if (enemyHeroesPositions.isEmpty) {
+          Stay
+        }// this might crash, but we should always have taverns
         // If tavern is next to us and life is below 100, then move towards it
-        if (tavernObjective.get.pathLength == 1 && hero.life < 95) {
+        else if (tavernObjective.get.pathLength == 1 && hero.life < 95) {
           moveTowardsClosestObjective(tavernObjective)
         } else {
           mineObjective match {
@@ -45,18 +49,22 @@ class BasicBot extends Bot {
                   positionedBoard.positionedTiles.exists(_.tile == Mine(Some(closestHeroRef.id))) &&
                   closestHeroRef.pos != closestHeroRef.spawnPos
                 ) {
-                  if (hero.life > closestHeroRef.life + 1) {
-                    println(s"Moving towards closest hero")
+                  if (hero.life > closestHeroRef.life + 21) {
                     // Attack weak hero close to current position
                     moveTowardsClosestObjective(heroObjective)
                   } else {
                     // Run away from strong hero close to current position
-                    println(s"Running away from closest hero to closest tavern")
-                    moveTowardsClosestObjective(tavernObjective)
+
+                    val neighbors = hero.pos.neighbors filter {nb => heroObjective.get.nextPos.exists(_ != nb)}
+                    val escapeRoutes: Set[Pos] = neighbors.filter { p => positionedBoard.at(p).exists(t => t.tile == Air || t.tile == Tavern) }
+
+                    nextDir(escapeRoutes.headOption)
                   }
 
                 } else {
                   val requiredLifeToReachMine = minLifeBeforeTavern + sp.pathLength
+
+                  println(s"HP: ${hero.life} Life req for mine: $requiredLifeToReachMine")
 
                   if (hero.life < requiredLifeToReachMine) {
                     // Move towards tavern if life is insufficient to travel and conquer nearest tavern
@@ -111,10 +119,10 @@ class BasicBot extends Bot {
         // Don't attack mines while walking towards a tavern to restore health
         case Mine(_) if positionedBoard.at(destination) exists {_.tile == Tavern} => false
         // Avoid heroes if they have more life
-        case Tile.Hero(_) if positionedBoard.at(destination) exists {!_.tile.isInstanceOf[Tile.Hero]} => false
+//        case Tile.Hero(_) if positionedBoard.at(destination) exists {!_.tile.isInstanceOf[Tile.Hero]} => false
         // Camp at a tavern if there's no mine to capture
         case Tavern if mines.isEmpty => true
-        // Avoid Taverns if life is max
+        // Avoid Taverns if life is almost max
         case Tavern if hero.life < 95 && hero.gold >= 2 => false
         // Don't attempt to walk via Taverns when chasing a hero or mine
         case Tavern if positionedBoard.at(destination) exists {pt => pt.tile.isInstanceOf[Tile.Hero] || pt.tile.isInstanceOf[Tile.Mine]} => false

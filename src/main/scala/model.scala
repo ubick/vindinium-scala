@@ -49,10 +49,10 @@ case class PositionedBoard(size: Int, positionedTiles: List[PositionedTile]) {
 
   val taverns: List[Pos] = positionedTiles.filter(_.tile == Tavern) map { _.pos }
 
-  def otherMinesPositions(hero: Hero): List[Pos] = {
+  def otherMinesPositions(heroes: List[Hero]): List[Pos] = {
     def loop(acc: List[Pos], pt: List[PositionedTile]): List[Pos] = pt match {
       case PositionedTile(Mine(None), pos) :: xs => loop(pos :: acc, xs)
-      case PositionedTile(Mine(Some(id)), pos) :: xs if hero.id != id => loop(pos :: acc, xs)
+      case PositionedTile(Mine(Some(id)), pos) :: xs if heroes.exists(_.id == id) => loop(pos :: acc, xs)
       case x::xs => loop(acc, xs)
       case Nil => acc
     }
