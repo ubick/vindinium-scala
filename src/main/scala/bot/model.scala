@@ -34,7 +34,9 @@ object Tile {
   case class Mine(heroId: Option[Int]) extends Tile
 }
 
-case class PositionedTile(tile: Tile, pos: Pos)
+case class PositionedTile(tile: Tile, pos: Pos) {
+  override def toString: String = s"$tile[${pos.x}, ${pos.y}]"
+}
 
 case class Board(size: Int, tiles: Vector[Tile]) {
 

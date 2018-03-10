@@ -63,7 +63,7 @@ class Pathfinder(input: Input) {
     val length: Int = positionedTiles.length
     val current: Option[PositionedTile] = positionedTiles.lift(0)
     val next: Option[PositionedTile] = positionedTiles.lift(1)
-    val destination: PositionedTile = positionedTiles.last
+    val destination: Option[PositionedTile] = positionedTiles.lastOption
     val nextDir: Dir = {
       val dir = for {
         currentTile <- current
@@ -82,6 +82,7 @@ class Pathfinder(input: Input) {
     @tailrec
     def foldL[B](st: ScoredTile, z: B, f: (B, PositionedTile) => B): B = st match {
       case ScoredTile(positionedTile, _, _, Some(tile)) => foldL(tile, f(z, positionedTile), f)
+      case ScoredTile(positionedTile, _, _, None) => f(z, positionedTile)
       case _ => z
     }
 

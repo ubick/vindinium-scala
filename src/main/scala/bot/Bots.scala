@@ -9,11 +9,11 @@ trait Bot {
 class BasicBot extends Bot {
   override def move(input: Input): Dir = {
     val startTime: Long = System.nanoTime
-    val dir = GameEngine.play(input)
-    val durationMilliseconds: Double = (System.nanoTime - startTime) * 1000 / 1e9d
-    println(s"Took $durationMilliseconds ms to compute move")
+    val output = GameEngine.play(input)
+    val ms: Double = (System.nanoTime - startTime) * 1000 / 1e9d
 
-    dir
+    println(s"[$ms ms] ${output._2} ")
+    output._1
   }
 }
 
