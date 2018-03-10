@@ -26,9 +26,9 @@ object Main {
     def oneGame(it: Int) {
       println(s"[$it/$games] Waiting for pairing...")
       val input = server.arena
-      println(s"[$it/$games] Start arena game ${input.viewUrl}")
+      println(s"[$it/$games] Start arena bot.game ${input.viewUrl}")
       steps(server, input)
-      println(s"\n[$it/$games] Finished arena game ${input.viewUrl}")
+      println(s"\n[$it/$games] Finished arena bot.game ${input.viewUrl}")
       if (it < games) oneGame(it + 1)
     }
     failsafe {
@@ -39,9 +39,9 @@ object Main {
   def training(server: Server, boot: Server ⇒ Input) {
     failsafe {
       val input = boot(server)
-      println("Training game " + input.viewUrl)
+      println("Training bot.game " + input.viewUrl)
       steps(server, input)
-      println(s"\nFinished training game ${input.viewUrl}")
+      println(s"\nFinished training bot.game ${input.viewUrl}")
     }
   }
 

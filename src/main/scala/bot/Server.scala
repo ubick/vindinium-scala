@@ -1,7 +1,8 @@
 package bot
 
 import play.api.libs.json._
-import scalaj.http.{ Http, HttpOptions }
+
+import scalaj.http.{Http, HttpOptions}
 
 final class Server(
   endpoint: String,
@@ -33,8 +34,9 @@ final class Server(
 
   // JSON parsing
 
-  import play.api.libs.json._
   import play.api.libs.functional.syntax._
+  import play.api.libs.json._
+
   import scala.util.Try
 
   implicit val posReads = Json.reads[Pos]

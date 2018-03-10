@@ -156,8 +156,8 @@ case class Game(
   finished: Boolean)
 
 case class Input(
-  game: Game,
-  hero: Hero,
-  token: String,
-  viewUrl: String,
-  playUrl: String)
+                  game: Game,
+                  hero: Hero,
+                  token: String,
+                  viewUrl: String,
+                  playUrl: String)
