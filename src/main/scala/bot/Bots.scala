@@ -12,8 +12,9 @@ class BasicBot extends Bot {
     val output = GameEngine.play(input)
     val ms: Double = (System.nanoTime - startTime) * 1000 / 1e9d
 
-    println(s"[$ms ms] ${output._2} ")
-    output._1
+    println(s"[$ms ms] ${output.reason} ")
+
+    output.dir
   }
 }
 
