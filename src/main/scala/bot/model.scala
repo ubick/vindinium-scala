@@ -37,8 +37,8 @@ object Tile {
   case class Mine(heroId: Option[Int]) extends Tile
 }
 
-case class PositionedTile(tile: Tile, pos: Pos, neighbors: Vector[PositionedTile] = Vector.empty) {
-  override def toString: String = s"$tile[${pos.x}, ${pos.y}] ${neighbors.length} neighbors"
+case class PositionedTile(tile: Tile, pos: Pos) {
+  override def toString: String = s"$tile[${pos.x}, ${pos.y}]"
 }
 
 case class Board(size: Int, tiles: Vector[Tile]) {
@@ -68,40 +68,23 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
 }
 
 object PositionedBoard {
-  def positionedTiles(board: Board): Vector[PositionedTile] = {
-    val tilesWithoutNeighbors: Vector[PositionedTile] =
-      board.tiles.foldLeft(Vector.empty: Vector[PositionedTile])((b: Vector[PositionedTile], t: Tile) => {
-        val previous: Option[PositionedTile] = b.headOption
+  def positionedTiles(board: Board): Vector[PositionedTile] =
+    board.tiles.foldLeft(Vector.empty: Vector[PositionedTile])((b: Vector[PositionedTile], t: Tile) => {
+      val previous: Option[PositionedTile] = b.headOption
 
-        def npos(pos: Pos): Pos = {
-          val n = pos.x * board.size + pos.y + 1
+      def npos(pos: Pos): Pos = {
+        val n = pos.x * board.size + pos.y + 1
 
-          val newX = n / board.size
-          val newY = n % board.size
+        val newX = n / board.size
+        val newY = n % board.size
 
-          Pos(newX, newY)
-        }
+        Pos(newX, newY)
+      }
 
-        val nextPos: Pos = previous.map({ pr => npos(pr.pos) }).getOrElse(Pos(0, 0))
+      val nextPos: Pos = previous.map({ pr => npos(pr.pos) }).getOrElse(Pos(0, 0))
 
-        PositionedTile(t, nextPos) +: b
-      })
-
-
-    val positionedBoardWithoutNeighbors: PositionedBoard = PositionedBoard(board.size, tilesWithoutNeighbors)
-
-    val positionedBoardWithNeighbors: Vector[PositionedTile] = tilesWithoutNeighbors map { twn =>
-      val neighbors: Vector[PositionedTile] = twn.pos.neighbors.toVector.flatMap(positionedBoardWithoutNeighbors.at)
-
-      PositionedTile(twn.tile, twn.pos, neighbors)
-    }
-
-    val tmpPositionedBoard = PositionedBoard(board.size, positionedBoardWithNeighbors)
-
-    positionedBoardWithNeighbors map { tn => tn.
-      PositionedTile(tn.tile, tn.pos, tn.neighbors.flatMap(n => tmpPositionedBoard.at(n.pos)))
-    }
-  }
+      PositionedTile(t, nextPos) +: b
+    })
 }
 
 case class Hero(

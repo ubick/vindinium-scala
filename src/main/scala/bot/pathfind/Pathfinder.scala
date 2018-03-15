@@ -13,7 +13,7 @@ class Pathfinder(input: Input, board: PositionedBoard) {
       if (best.positionedTile.pos == target.pos) Some(best)
       else {
         val openWithoutBest: Vector[ScoredTile] = open.filterNot(_.positionedTile == best.positionedTile)
-        val bestNeighbors: Vector[ScoredTile] = best.neighbors(target).filterNot(scoredTileIn(_, closed))
+        val bestNeighbors: Vector[ScoredTile] = neighbors(best, target).filterNot(scoredTileIn(_, closed))
         val updatedOpenList: Vector[ScoredTile] = bestNeighbors.foldRight(openWithoutBest)(replaceTileWithLowerFScoreIn)
         val updatedClosedList: Vector[ScoredTile] = best +: closed
 
@@ -41,6 +41,12 @@ class Pathfinder(input: Input, board: PositionedBoard) {
   private def toScoredTiles(pts: Vector[PositionedTile], target: PositionedTile): Vector[ScoredTile] =
     pts map { st => ScoredTile(st, 1, Pathfinder.distanceHeuristic(st, target), None) }
 
+  private def neighbors(source: ScoredTile, target: PositionedTile): Vector[ScoredTile] = {
+    for {
+      neighbor <- source.positionedTile.pos.neighbors.toVector flatMap board.at
+      if Pathfinder.isTileWalkable(neighbor, target)
+    } yield ScoredTile(neighbor, source.g + 1, Pathfinder.distanceHeuristic(neighbor, target), Some(source))
+  }
 }
 
 object Pathfinder {
@@ -54,15 +60,10 @@ object Pathfinder {
 
 case class ScoredTile(positionedTile: PositionedTile, g: Int, h: Int, parent: Option[ScoredTile]) {
   val f: Int = g + h
-
-  def neighbors(target: PositionedTile): Vector[ScoredTile] = for {
-    neighbor <- positionedTile.neighbors
-    if Pathfinder.isTileWalkable(neighbor, target)
-  } yield ScoredTile(neighbor, g + 1, Pathfinder.distanceHeuristic(neighbor, target), Some(this))
 }
 
 case class Path(positionedTiles: Vector[PositionedTile]) {
-  val length: Int = positionedTiles.length
+  val length: Int = positionedTiles.length - 1
   val current: Option[PositionedTile] = positionedTiles.lift(0)
   val next: Option[PositionedTile] = positionedTiles.lift(1)
   val destination: Option[PositionedTile] = positionedTiles.lastOption

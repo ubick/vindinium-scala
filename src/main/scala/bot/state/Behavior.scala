@@ -4,55 +4,12 @@ import bot._
 import bot.pathfind.{Path, Pathfinder}
 
 trait Behavior {
-  val priorities = List(
-    "seek-tavern",
-    "seek-mine",
-    "seek-hero",
-    "idle"
-  )
-
   def run(): Path
   def validate(): ValidReason
 }
 
-class SeekTavern(implicit val input: Input, implicit val board: PositionedBoard, implicit val pathfinder: Pathfinder) extends Behavior {
 
-  val heroTile = PositionedTile(Tile.Hero(input.hero.id), input.hero.pos)
 
-  override def run(): Path = {
-    pathfinder.multiGoalFind(board.taverns, heroTile)
-    
-
-//    val mineObjective: Option[ScoredPos] = closestObjective(mines)
-//    val tavernObjective: Option[ScoredPos] = closestObjective(taverns)
-//    val heroObjective: Option[ScoredPos] = closestObjective(enemyHeroesPositions)
-//    val closestHeroRef: Hero = input.bot.game.heroes filter {_.pos == heroObjective.get.objectivePos.pos} head
-  }
-
-  override def validate(): ValidReason = {
-    val path: Path = pathfinder.multiGoalFind(board.taverns, heroTile)
-
-    if (path.length == 1 && input.hero.life < 81) ValidReason(valid = true, "tavern path == 1 and hero life < 81")
-    else if (input.hero.life < 98) ValidReason(valid = true, "hero life < 98")
-    else ValidReason(valid = false)
-    // (hero.life < requiredLifeToReachMine)
-    //              // Head towards a tavern if there's no mine left to conquer
-  }
-}
-
-class SeekHero(implicit val input: Input, implicit val board: PositionedBoard, implicit val pathfinder: Pathfinder) extends Behavior {
-  override def run(): Path = {
-    val hero = input.hero
-    val enemyHeroesTiles: Vector[PositionedTile] = input.game.heroes.toVector collect {
-      case h if h.id != hero.id => board at h.pos get
-    }
-    val heroTile = board at hero.pos get
-
-    pathfinder.multiGoalFind(enemyHeroesTiles, heroTile)
-  }
-
-  override def validate(): ValidReason = ValidReason(valid = true, "always seek hero")
-}
 
 //val myHeroFilter: Hero => Boolean = (hero: Hero) => List("Ubick", "Liviu", "Oana").exists(hero.name ==)
 //val startTime: Long = System.nanoTime

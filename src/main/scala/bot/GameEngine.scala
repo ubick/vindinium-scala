@@ -2,16 +2,17 @@ package bot
 
 import bot.Dir.Stay
 import bot.pathfind.Pathfinder
-import bot.state.{Behavior,  SeekHero, SeekTavern}
+import bot.state.{Behavior, SeekHero, SeekMine, SeekTavern}
 
 object GameEngine {
-  def play(gameInput: Input): DirReason = {
-    implicit val input: Input = gameInput
+  def play(input: Input): DirReason = {
+    implicit val hero: Hero = input.hero
     implicit val board: PositionedBoard = PositionedBoard(input.game.board.size, PositionedBoard.positionedTiles(input.game.board))
     implicit val pathfinder: Pathfinder = new Pathfinder(input, board)
 
     val behaviors: List[Behavior] = List(
-//      new SeekTavern(),
+      new SeekTavern(),
+      new SeekMine(),
       new SeekHero()
     )
 
