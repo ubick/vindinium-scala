@@ -7,8 +7,13 @@ import bot._
 import scala.annotation.tailrec
 
 class Pathfinder(input: Input, board: PositionedBoard) {
+  val hero: Hero = input.hero
 
   def multiGoalFind(goals: Vector[PositionedTile], target: PositionedTile): Path = {
+//    println(s"target ==\n $target")
+//    println("neighbors \n")
+//    isPositionedTileNextToEnemyNeighbor(target)
+
     def handleBestTile(best: ScoredTile, open: Vector[ScoredTile], closed: Vector[ScoredTile]): Option[ScoredTile] = {
       if (best.positionedTile.pos == target.pos) Some(best)
       else {
@@ -44,8 +49,8 @@ class Pathfinder(input: Input, board: PositionedBoard) {
   private def neighbors(source: ScoredTile, target: PositionedTile): Vector[ScoredTile] = {
     for {
       neighbor <- source.positionedTile.pos.neighbors.toVector flatMap board.at
-      if Pathfinder.isTileWalkable(neighbor, target)
-    } yield ScoredTile(neighbor, source.g + 1, Pathfinder.distanceHeuristic(neighbor, target), Some(source))
+      if Pathfinder.isTileWalkable(neighbor, target, hero)
+    } yield ScoredTile(neighbor, source.g + neighbor.weight, Pathfinder.distanceHeuristic(neighbor, target), Some(source))
   }
 }
 
@@ -53,8 +58,9 @@ object Pathfinder {
   def distanceHeuristic(pt1: PositionedTile, pt2: PositionedTile): Int =
     Math.abs(pt1.pos.x - pt2.pos.x) + Math.abs(pt1.pos.y - pt2.pos.y)
 
-  def isTileWalkable(pt: PositionedTile, target: PositionedTile): Boolean =
+  def isTileWalkable(pt: PositionedTile, target: PositionedTile, hero: Hero): Boolean =
     if (pt.equals(target)) true
+    else if (pt.tile.equals(Tile.Hero(hero.id))) true // allows flee paths to be calculated if they go through our hero
     else pt.tile.equals(Air)
 }
 
@@ -63,7 +69,7 @@ case class ScoredTile(positionedTile: PositionedTile, g: Int, h: Int, parent: Op
 }
 
 case class Path(positionedTiles: Vector[PositionedTile]) {
-  val length: Int = positionedTiles.length - 1
+  val length: Int = if (positionedTiles.nonEmpty) positionedTiles.length - 1 else 0
   val current: Option[PositionedTile] = positionedTiles.lift(0)
   val next: Option[PositionedTile] = positionedTiles.lift(1)
   val destination: Option[PositionedTile] = positionedTiles.lastOption
@@ -76,6 +82,8 @@ case class Path(positionedTiles: Vector[PositionedTile]) {
 
     dir getOrElse Stay
   }
+  val isEmpty: Boolean = positionedTiles.isEmpty
+  val isNonEmpty: Boolean = positionedTiles.nonEmpty
 
   def dirFromTiles(p1: PositionedTile, p2: PositionedTile): Option[Dir] =
     Set(North, South, West, East) find { p1.pos.to(_) == p2.pos }

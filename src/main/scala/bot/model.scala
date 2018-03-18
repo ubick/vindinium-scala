@@ -37,7 +37,7 @@ object Tile {
   case class Mine(heroId: Option[Int]) extends Tile
 }
 
-case class PositionedTile(tile: Tile, pos: Pos) {
+case class PositionedTile(tile: Tile, pos: Pos, weight: Int = 1) {
   override def toString: String = s"$tile[${pos.x}, ${pos.y}]"
 }
 
@@ -54,17 +54,7 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
 
   val taverns: Vector[PositionedTile] = positionedTiles.filter(_.tile == Tavern)
 
-//  def otherMinesPositions(heroes: List[Hero]): List[Pos] = {
-//    def loop(acc: List[Pos], pt: List[PositionedTile]): List[Pos] = pt match {
-//      case PositionedTile(Mine(None), pos) :: xs => loop(pos :: acc, xs)
-//      case PositionedTile(Mine(Some(id)), pos) :: xs if heroes.exists(_.id == id) => loop(pos :: acc, xs)
-//      case x::xs => loop(acc, xs)
-//      case Nil => acc
-//    }
-//
-//    loop(List(), positionedTiles)
-//  }
-
+  val weightedTiles: Vector[PositionedTile] = Vector.empty
 }
 
 object PositionedBoard {

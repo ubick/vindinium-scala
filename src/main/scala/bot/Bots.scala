@@ -10,9 +10,11 @@ class BasicBot extends Bot {
   override def move(input: Input): Dir = {
     val startTime: Long = System.nanoTime
     val output = GameEngine.play(input)
-    val ms: Double = (System.nanoTime - startTime) * 1000 / 1e9d
+    val ms: Double = Math.floor((System.nanoTime - startTime) * 1000 / 1e9d)
+    val paddedMs = s"$ms".padTo(4, " ").mkString
+    val paddedTurn = s"${input.game.turn}/${input.game.maxTurns}".padTo(7, " ").mkString
 
-    println(s"[$ms ms] ${output.reason} ")
+//    println(f"[$paddedMs ms] Turn [$paddedTurn] ${output.reason} ")
 
     output.dir
   }
