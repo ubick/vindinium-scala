@@ -14,7 +14,7 @@ class BasicBot extends Bot {
     val paddedMs = s"$ms".padTo(4, " ").mkString
     val paddedTurn = s"${input.game.turn}/${input.game.maxTurns}".padTo(7, " ").mkString
 
-//    println(f"[$paddedMs ms] Turn [$paddedTurn] ${output.reason} ")
+    print(s"\033[H\033[2J\n[$paddedMs ms] Turn [$paddedTurn] ${output.reason} ")
 
     output.dir
   }

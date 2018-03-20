@@ -54,7 +54,22 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
 
   val taverns: Vector[PositionedTile] = positionedTiles.filter(_.tile == Tavern)
 
-  val weightedTiles: Vector[PositionedTile] = Vector.empty
+  def weightedTiles(enemyHeroes: Vector[Hero]): Vector[PositionedTile] =
+    enemyHeroes.foldRight(positionedTiles: Vector[PositionedTile])((a: Hero, b: Vector[PositionedTile]) => {
+      val x = a.pos.neighbors.toVector flatMap (_.neighbors) distinct
+      val heroNeighbors = x flatMap at
+
+      val bWithNeighbors = heroNeighbors.foldRight(b: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
+        bb.updated(bb.indexOf(aa), aa.copy(weight = 20))
+      })
+
+      val updated: Option[Vector[PositionedTile]] = for {
+        heroTile <- at(a.pos)
+        idx = bWithNeighbors.indexOf(heroTile)
+      } yield bWithNeighbors.updated(idx, heroTile.copy(weight = 30))
+
+      updated getOrElse bWithNeighbors
+    })
 }
 
 object PositionedBoard {
