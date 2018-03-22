@@ -11,7 +11,8 @@ object GameEngine {
     val hero: Hero = input.hero
     val simpleBoard: PositionedBoard = PositionedBoard(input.game.board.size, PositionedBoard.positionedTiles(input.game.board))
 
-    val board: PositionedBoard = simpleBoard.copy(positionedTiles = simpleBoard.weightedTiles(input.game.heroes.toVector.filterNot(_.id == hero.id)))
+    val board: PositionedBoard = simpleBoard.copy(positionedTiles =
+      simpleBoard.weightedTiles(input.game.heroes.toVector.filterNot(_.id == hero.id), input.hero))
 
     val enemyHeroes: Vector[Hero] = input.game.heroes.toVector filter ( _.id != input.hero.id )
     implicit val context: GameContext = GameContext(board, input.hero, enemyHeroes, new Pathfinder(input, board))

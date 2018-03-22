@@ -7,7 +7,9 @@ object Dir extends Enumeration {
 
 
 import bot.Dir.{Dir, _}
-import bot.Tile.Tavern
+import bot.Tile.{Air, Tavern}
+
+import scala.annotation.tailrec
 
 case class DirReason(dir: Dir, reason: String = "")
 case class ValidReason(valid: Boolean, reason: String = "")
@@ -54,22 +56,60 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
 
   val taverns: Vector[PositionedTile] = positionedTiles.filter(_.tile == Tavern)
 
-  def weightedTiles(enemyHeroes: Vector[Hero]): Vector[PositionedTile] =
-    enemyHeroes.foldRight(positionedTiles: Vector[PositionedTile])((a: Hero, b: Vector[PositionedTile]) => {
-      val x = a.pos.neighbors.toVector flatMap (_.neighbors) distinct
-      val heroNeighbors = x flatMap at
+  def weightedTiles(enemyHeroes: Vector[Hero], hero: Hero): Vector[PositionedTile] = {
+    val enemyTiles: Vector[PositionedTile] = enemyHeroes map(_.pos) flatMap at
 
-      val bWithNeighbors = heroNeighbors.foldRight(b: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
-        bb.updated(bb.indexOf(aa), aa.copy(weight = 20))
-      })
+    enemyTiles.foldRight(positionedTiles: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {
+      val neighbors: Vector[PositionedTile] = withNeighbors(a, b, None)
+//      val secondNeighbors: Vector[PositionedTile] = withSecondNeighbors(a, hero, firstNeighbors)
+//      val thirdNeighbors: Vector[PositionedTile] = withThirdNeighbors(a, hero, secondNeighbors)
 
       val updated: Option[Vector[PositionedTile]] = for {
         heroTile <- at(a.pos)
-        idx = bWithNeighbors.indexOf(heroTile)
-      } yield bWithNeighbors.updated(idx, heroTile.copy(weight = 30))
+        idx = neighbors.indexOf(heroTile)
+      } yield neighbors.updated(idx, heroTile.copy(weight = 40))
 
-      updated getOrElse bWithNeighbors
+      updated getOrElse neighbors
     })
+  }
+
+  private def withNeighbors(source: PositionedTile, tiles: Vector[PositionedTile], parent: Option[PositionedTile]): Vector[PositionedTile] = {
+    def loop(source: PositionedTile, tiles: Vector[PositionedTile], parent: Option[PositionedTile], level: Int): Vector[PositionedTile] = {
+      if (level > 3) tiles
+      else {
+        val neighbors: Vector[PositionedTile] = source.pos.neighbors.toVector flatMap at filter (n => n.tile == Air && !parent.exists(_.pos == n.pos))
+
+        val tilesWithNeighbors: Vector[PositionedTile] = neighbors.foldRight(tiles: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
+          if (bb.indexOf(aa) != -1) bb.updated(bb.indexOf(aa), aa.copy(weight = 40 - level * 10))
+          else bb
+        })
+
+        neighbors.foldRight(tilesWithNeighbors)((a: PositionedTile, b: Vector[PositionedTile]) => {
+          loop(a, b, Some(source), level + 1)
+        })
+      }
+    }
+
+    loop(source, tiles, parent, 1)
+  }
+
+  private def withSecondNeighbors(enemy: Hero, hero: Hero, tiles: Vector[PositionedTile]): Vector[PositionedTile] = {
+    val secondNeighborsPos: Vector[Pos] = enemy.pos.neighbors.toVector flatMap (_.neighbors) flatMap (_.neighbors) filter { p => p != enemy.pos && p != hero.pos } distinct
+    val secondNeighbors: Vector[PositionedTile] = secondNeighborsPos flatMap at
+
+    secondNeighbors.foldRight(tiles: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
+      bb.updated(bb.indexOf(aa), aa.copy(weight = 20))
+    })
+  }
+
+  private def withThirdNeighbors(enemy: Hero, hero: Hero, tiles: Vector[PositionedTile]): Vector[PositionedTile] = {
+    val thirdNeighborsPos: Vector[Pos] = enemy.pos.neighbors.toVector flatMap (_.neighbors) flatMap (_.neighbors) flatMap (_.neighbors) filter { p => p != enemy.pos && p != hero.pos } distinct
+    val thirdNeighbors: Vector[PositionedTile] = thirdNeighborsPos flatMap at filter { _.weight == 1 }
+
+    thirdNeighbors.foldRight(tiles: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
+      bb.updated(bb.indexOf(aa), aa.copy(weight = 10))
+    })
+  }
 }
 
 object PositionedBoard {

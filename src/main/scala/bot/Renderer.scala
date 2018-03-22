@@ -12,7 +12,7 @@ object Renderer {
       case Mine(None) => s"\u001B[36m  ◧  " + "\u001B[0m"
       case Tavern => s" \u001B[33m🍻 🍻 [0m"
       case Tile.Hero(id) if id == input.hero.id => s"  \u001B[32m😀  \u001B[0m"
-      case Tile.Hero(id) => s"  \u001B[31m😈 ${pt.weight}" + "\u001B[0m"
+      case Tile.Hero(id) => s"  \u001B[31m😈 $id" + "\u001B[0m"
       case _ => s"?${pt.weight}"
     }
 
