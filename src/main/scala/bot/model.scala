@@ -61,8 +61,6 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
 
     enemyTiles.foldRight(positionedTiles: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {
       val neighbors: Vector[PositionedTile] = withNeighbors(a, b, None)
-//      val secondNeighbors: Vector[PositionedTile] = withSecondNeighbors(a, hero, firstNeighbors)
-//      val thirdNeighbors: Vector[PositionedTile] = withThirdNeighbors(a, hero, secondNeighbors)
 
       val updated: Option[Vector[PositionedTile]] = for {
         heroTile <- at(a.pos)
@@ -91,24 +89,6 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
     }
 
     loop(source, tiles, parent, 1)
-  }
-
-  private def withSecondNeighbors(enemy: Hero, hero: Hero, tiles: Vector[PositionedTile]): Vector[PositionedTile] = {
-    val secondNeighborsPos: Vector[Pos] = enemy.pos.neighbors.toVector flatMap (_.neighbors) flatMap (_.neighbors) filter { p => p != enemy.pos && p != hero.pos } distinct
-    val secondNeighbors: Vector[PositionedTile] = secondNeighborsPos flatMap at
-
-    secondNeighbors.foldRight(tiles: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
-      bb.updated(bb.indexOf(aa), aa.copy(weight = 20))
-    })
-  }
-
-  private def withThirdNeighbors(enemy: Hero, hero: Hero, tiles: Vector[PositionedTile]): Vector[PositionedTile] = {
-    val thirdNeighborsPos: Vector[Pos] = enemy.pos.neighbors.toVector flatMap (_.neighbors) flatMap (_.neighbors) flatMap (_.neighbors) filter { p => p != enemy.pos && p != hero.pos } distinct
-    val thirdNeighbors: Vector[PositionedTile] = thirdNeighborsPos flatMap at filter { _.weight == 1 }
-
-    thirdNeighbors.foldRight(tiles: Vector[PositionedTile])((aa: PositionedTile, bb: Vector[PositionedTile]) => {
-      bb.updated(bb.indexOf(aa), aa.copy(weight = 10))
-    })
   }
 }
 
