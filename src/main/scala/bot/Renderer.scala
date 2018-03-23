@@ -9,7 +9,7 @@ object Renderer {
   val RED = "\u001B[31m"
   val RESET = "\u001B[0m"
 
-  def renderBoard(board: PositionedBoard, input: Input, dirReason: DirReason): String = {
+  def renderBoard(board: PositionedBoard, input: Input, dirReason: DirReason, skipBoard: Boolean = false): String = {
     def printPositionedTile(pt: PositionedTile): String = pt.tile match {
       case Wall => s"▓▓▓▓▓"
       case Air if dirReason.path.exists(_.positionedTiles.exists(_.pos == pt.pos)) => s"$YELLOW  " + s"${pt.weight}▶".padTo(3, " ").mkString + RESET
@@ -35,9 +35,10 @@ object Renderer {
         }
       }
 
-    val outputBeforeEnd: String = s"Life: ${input.hero.life} | ${dirReason.reason}\n\n$renderedBoard"
+    val outputBeforeEnd: String = s"Life: ${input.hero.life} | ${dirReason.reason}" + (if (skipBoard) "" else s"\n\n$renderedBoard")
 
-    if (input.game.turn == input.game.maxTurns - 3) {
+    if (skipBoard) outputBeforeEnd
+    else if (input.game.turn == input.game.maxTurns - 3) {
       outputBeforeEnd + "\33[1A" * (board.size + 3)
     } else outputBeforeEnd
   }

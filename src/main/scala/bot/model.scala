@@ -59,9 +59,9 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
   def otherMines(hero: Hero): Vector[PositionedTile] = mines.filterNot(_.tile == Mine(Some(hero.id)))
 
   def weightedTiles(enemyHeroes: Vector[Hero], hero: Hero): Vector[PositionedTile] = {
-    // only add weight around stronger heroes
+    // only add weight around stronger heroes or those close to their spawn pos
     val enemyTiles: Vector[PositionedTile] = enemyHeroes collect {
-      case h: Hero if hero.life - h.life <= 20 => h.pos
+      case h: Hero if hero.life - h.life <= 20 || h.pos.neighbors.exists(h.spawnPos ==) || h.pos == h.spawnPos => h.pos
     } flatMap at
 
     enemyTiles.foldRight(positionedTiles: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {

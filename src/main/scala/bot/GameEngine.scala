@@ -6,7 +6,7 @@ import bot.state._
 
 object GameEngine {
 
-  def play(input: Input): DirReason = {
+  def play(input: Input, skipBoard: Boolean = false): DirReason = {
     val hero: Hero = input.hero
     val simpleBoard: PositionedBoard = PositionedBoard(input.game.board.size, PositionedBoard.positionedTiles(input.game.board))
 
@@ -34,7 +34,7 @@ object GameEngine {
       }
     } getOrElse DirReason(Stay, "No behavior matched.")
 
-    dirReason.copy(reason = Renderer.renderBoard(board, input, dirReason))
+    dirReason.copy(reason = Renderer.renderBoard(board, input, dirReason, skipBoard))
   }
 
   case class GameContext(board: PositionedBoard, hero: Hero, enemyHeroes: Vector[Hero], pathfinder: Pathfinder)
