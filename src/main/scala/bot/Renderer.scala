@@ -3,16 +3,23 @@ package bot
 import bot.Tile.{Air, Mine, Tavern, Wall}
 
 object Renderer {
-  def renderBoard(board: PositionedBoard, input: Input, reason: String): String = {
+  val YELLOW = "\u001B[33m"
+  val CYAN = "\u001B[36m"
+  val GREEN = "\u001B[32m"
+  val RED = "\u001B[31m"
+  val RESET = "\u001B[0m"
+
+  def renderBoard(board: PositionedBoard, input: Input, dirReason: DirReason): String = {
     def printPositionedTile(pt: PositionedTile): String = pt.tile match {
       case Wall => s"▓▓▓▓▓"
+      case Air if dirReason.path.exists(_.positionedTiles.exists(_.pos == pt.pos)) => s"$YELLOW  " + s"${pt.weight}▶".padTo(3, " ").mkString + RESET
       case Air => s"  ${pt.weight}"
-      case Mine(Some(id)) if id == input.hero.id => s"\u001B[32m  ◧ $id" + "\u001B[0m"
-      case Mine(Some(id)) => s"\u001B[36m  ◧ $id" + "\u001B[0m"
-      case Mine(None) => s"\u001B[36m  ◧  " + "\u001B[0m"
-      case Tavern => s" \u001B[33m🍻 🍻 [0m"
-      case Tile.Hero(id) if id == input.hero.id => s"  \u001B[32m😀  \u001B[0m"
-      case Tile.Hero(id) => s"  \u001B[31m😈 $id" + "\u001B[0m"
+      case Mine(Some(id)) if id == input.hero.id => s"$GREEN  ◧ $id$RESET"
+      case Mine(Some(id)) => s"$CYAN  ◧ $id$RESET"
+      case Mine(None) => s"$CYAN  ◧  $RESET"
+      case Tavern => s"$YELLOW PUB $RESET"
+      case Tile.Hero(id) if id == input.hero.id => s"$GREEN  😀  $RESET"
+      case Tile.Hero(id) => s"$RED  😈 $id$RESET"
       case _ => s"?${pt.weight}"
     }
 
@@ -28,7 +35,7 @@ object Renderer {
         }
       }
 
-    val outputBeforeEnd: String = s"Life: ${input.hero.life} | $reason\n\n$renderedBoard"
+    val outputBeforeEnd: String = s"Life: ${input.hero.life} | ${dirReason.reason}\n\n$renderedBoard"
 
     if (input.game.turn == input.game.maxTurns - 3) {
       outputBeforeEnd + "\33[1A" * (board.size + 3)

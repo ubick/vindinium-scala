@@ -9,8 +9,9 @@
 - [x] Remove 1 tile area around enemy from path
 - [x] Add tile weight to neighbors of neighbors of hero
 - [x] Calculate tile weight at start of game
-- [~] Refactor tile-weight calculation starting from enemy hero positions and add another level of neighbor scores
-- [~~] Attack hero with 50% of mines
+- [x] Refactor tile-weight calculation starting from enemy hero positions and add another level of neighbor scores
+- [x] Attack hero with 50% of mines
+- [~] Color code desired path
 - [ ] Review double bot / tavern infinite loop cycle (http://159.65.169.154:9000/3892z7oa, http://159.65.169.154:9000/d50u8o54?speed=max)
 - [ ] Moving up/down in a loop outside tavern (http://159.65.169.154:9000/67yxnty6)
 <!-- - [ ] If enemy with higher health in path, then seek next closest objective -->

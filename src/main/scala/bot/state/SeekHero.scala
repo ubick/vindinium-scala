@@ -28,18 +28,13 @@ class SeekHero(implicit val context: GameContext) extends Behavior {
     val heroTile = PositionedTile(Tile.Hero(hero.id), hero.pos)
     val path = pathfinder.multiGoalFind(enemyHeroesTiles, heroTile)
 
-    if (path.isNonEmpty && path.length < 3) ValidReason(valid = true, s"Hero is ${path.length} close.")
+    if (path.isNonEmpty && path.length < 4) ValidReason(valid = true, s"Hero is ${path.length} tiles away.")
     else ValidReason(valid = false)
-  }
-
-  private val mines: Vector[PositionedTile] = board.positionedTiles collect {
-    case PositionedTile(Tile.Mine(owner), pos, _) if owner.isEmpty || owner.exists( hero.id !=) => board at pos get
   }
 
   private def isEnemyAttackable(enemy: Hero): Boolean =
     hero.life - enemy.life > 20 &&
-    enemy.gold > hero.gold &&
-    enemy.mineCount > hero.mineCount &&
+    enemy.mineCount > 0 &&
     enemy.pos != enemy.spawnPos
 
   override def toString: String = "Seek Hero"

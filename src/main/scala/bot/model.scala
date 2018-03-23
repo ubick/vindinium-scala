@@ -7,11 +7,10 @@ object Dir extends Enumeration {
 
 
 import bot.Dir.{Dir, _}
-import bot.Tile.{Air, Tavern}
+import bot.Tile.{Air, Mine, Tavern}
+import bot.pathfind.Path
 
-import scala.annotation.tailrec
-
-case class DirReason(dir: Dir, reason: String = "")
+case class DirReason(dir: Dir, reason: String = "", path: Option[Path] = None)
 case class ValidReason(valid: Boolean, reason: String = "")
 case class Pos(x: Int, y: Int) {
 
@@ -50,14 +49,20 @@ case class Board(size: Int, tiles: Vector[Tile]) {
 }
 
 case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
+  val taverns: Vector[PositionedTile] = positionedTiles.filter(_.tile == Tavern)
 
   def at(pos: Pos): Option[PositionedTile] =
     if (pos isIn size) positionedTiles.reverse lift (pos.x * size + pos.y) else None
 
-  val taverns: Vector[PositionedTile] = positionedTiles.filter(_.tile == Tavern)
+  val mines: Vector[PositionedTile] = positionedTiles.filter(_.tile.isInstanceOf[Mine])
+
+  def otherMines(hero: Hero): Vector[PositionedTile] = mines.filterNot(_.tile == Mine(Some(hero.id)))
 
   def weightedTiles(enemyHeroes: Vector[Hero], hero: Hero): Vector[PositionedTile] = {
-    val enemyTiles: Vector[PositionedTile] = enemyHeroes map(_.pos) flatMap at
+    // only add weight around stronger heroes
+    val enemyTiles: Vector[PositionedTile] = enemyHeroes collect {
+      case h: Hero if hero.life - h.life <= 20 => h.pos
+    } flatMap at
 
     enemyTiles.foldRight(positionedTiles: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {
       val neighbors: Vector[PositionedTile] = withNeighbors(a, b, None)
