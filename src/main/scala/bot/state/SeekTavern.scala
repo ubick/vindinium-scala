@@ -21,7 +21,6 @@ class SeekTavern(implicit val context: GameContext) extends Behavior {
     else if (path.length == 1 && hero.life < 91) ValidReason(valid = true, "tavern path == 1 and hero life < 91")
     else if (hero.life < lifeToWinMine) ValidReason(valid = true, "Not enough life to travel to closest mine")
     else if (hero.life < 21) ValidReason(valid = true, "hero life < 21")
-    else if (hero.mineCount > board.mines.length / 2) ValidReason(valid = true, "Owning 50% of all mines. Camping at the pub.")
     else ValidReason(valid = false)
   }
 

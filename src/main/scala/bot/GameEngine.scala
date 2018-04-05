@@ -17,10 +17,11 @@ object GameEngine {
     implicit val context: GameContext = GameContext(board, input.hero, enemyHeroes, new Pathfinder(input, board))
 
     val behaviors: List[Behavior] = List(
+      new AssuredVictory(),
+      new FleeHero(),
       new SeekHero(),
       new ChaseRichHero(),
       new SeekTavern(),
-      new FleeHero(),
       new SeekMine()
     )
 

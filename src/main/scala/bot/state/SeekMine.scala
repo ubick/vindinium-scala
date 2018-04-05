@@ -8,6 +8,7 @@ class SeekMine(implicit val context: GameContext) extends Behavior {
   val hero: Hero = context.hero
   val board: PositionedBoard = context.board
   val pathfinder: Pathfinder = context.pathfinder
+  val enemyHeroes: Vector[Hero] = context.enemyHeroes
 
   override def run(): Path = pathToClosestMine
 
@@ -24,11 +25,13 @@ class SeekMine(implicit val context: GameContext) extends Behavior {
   override def toString: String = "Seek Mine"
 
   private val pathToClosestMine: Path = {
-    val mines: Vector[PositionedTile] = board.positionedTiles collect {
-      case PositionedTile(Tile.Mine(owner), pos, _) if owner.isEmpty || owner.exists( hero.id !=) => board at pos get
-    }
+    val mines: Vector[PositionedTile] = board.otherMines(hero) filterNot mineCloseToEnemy
     val heroTile = PositionedTile(Tile.Hero(hero.id), hero.pos)
 
     pathfinder.multiGoalFind(mines, heroTile)
+  }
+
+  private def mineCloseToEnemy(mine: PositionedTile): Boolean = {
+    mine.pos.neighbors.exists {n => enemyHeroes.exists(_.pos == n)}
   }
 }

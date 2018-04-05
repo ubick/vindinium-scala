@@ -8,7 +8,7 @@ trait Bot {
 
 class BasicBot extends Bot {
   override def move(input: Input): Dir = {
-    val skipBoard = false
+    val skipBoard = true
     val startTime: Long = System.nanoTime
     val output = GameEngine.play(input, skipBoard)
     val ms: Double = Math.floor((System.nanoTime - startTime) * 1000 / 1e9d)

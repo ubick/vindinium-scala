@@ -64,12 +64,19 @@ case class PositionedBoard(size: Int, positionedTiles: Vector[PositionedTile]) {
       case h: Hero if hero.life - h.life <= 20 || h.pos.neighbors.exists(h.spawnPos ==) || h.pos == h.spawnPos => h.pos
     } flatMap at
 
-    enemyTiles.foldRight(positionedTiles: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {
+    val tilesWithSpawnWeights: Vector[PositionedTile] =
+      enemyHeroes.map(e => PositionedTile(Air, e.spawnPos)).foldRight(positionedTiles: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {
+        if (b.indexOf(a) != -1) b.updated(b.indexOf(a), a.copy(weight = 10))
+        else b
+      })
+
+    enemyTiles.foldRight(tilesWithSpawnWeights: Vector[PositionedTile])((a: PositionedTile, b: Vector[PositionedTile]) => {
       val neighbors: Vector[PositionedTile] = withNeighbors(a, b, None)
 
       val updated: Option[Vector[PositionedTile]] = for {
         heroTile <- at(a.pos)
         idx = neighbors.indexOf(heroTile)
+        if idx != -1
       } yield neighbors.updated(idx, heroTile.copy(weight = 40))
 
       updated getOrElse neighbors

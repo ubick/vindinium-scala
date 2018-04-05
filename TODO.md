@@ -13,7 +13,9 @@
 - [x] Attack hero with 50% of mines
 - [x] Color code desired path
 - [x] Conside all enemy dangerous if withing 1 tile of spawn position
+- [x] Stay at pub if owning 50% of mines, regardless of other behaviors
 - [x] Fix endless tavern / mine loop (http://localhost:9000/bl0tsnl4)
+- [~] Sacrifice to mine instead of giving mines to opponent
 - [ ] Review double bot / tavern infinite loop cycle (http://159.65.169.154:9000/3892z7oa, http://159.65.169.154:9000/d50u8o54?speed=max)
 - [ ] Moving up/down in a loop outside tavern (http://159.65.169.154:9000/67yxnty6)
 <!-- - [ ] If enemy with higher health in path, then seek next closest objective -->

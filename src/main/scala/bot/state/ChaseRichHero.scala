@@ -27,11 +27,8 @@ class ChaseRichHero(implicit val context: GameContext) extends Behavior {
 
   override def validate(): ValidReason =
     richHero match {
-      case Some(h) =>
-        if (closestTavernPath.length == 2 && h.life - hero.life >= 20) ValidReason(valid = false)
-        else if (tavernNextToEnemy(h)) ValidReason(valid = false)
-        else ValidReason(valid = true, s"Chasing richest hero: $h")
-      case None => ValidReason(valid = false)
+      case Some(h) if !tavernNextToEnemy(h) => ValidReason(valid = true, s"Chasing richest hero: $h")
+      case _ => ValidReason(valid = false)
     }
 
   private def tavernNextToEnemy(enemy: Hero) =

@@ -1,7 +1,7 @@
 package bot.state
 
 import bot.GameEngine.GameContext
-import bot.Tile.Air
+import bot.Tile.{Air, Tavern}
 import bot._
 import bot.pathfind.{Path, Pathfinder}
 
@@ -45,11 +45,15 @@ class FleeHero(implicit val context: GameContext) extends Behavior {
   override def toString: String = "Flee Hero"
 
   private def fleeingTile(current: PositionedTile, enemy: PositionedTile): PositionedTile = {
-    val fleeRoutes: Vector[Pos] = current.pos.neighbors.toVector.filter(p => board.at(p).exists(_.tile == Air))
-    val fleePositionedTiles: Vector[PositionedTile] = fleeRoutes flatMap board.at
-    val fleePaths: Vector[Path] = fleePositionedTiles map { f => pathfinder.multiGoalFind(Vector(enemy), f) }
+    current.pos.neighbors.find(board.at(_).exists(_.tile == Tavern)) match {
+      case Some(pos) => PositionedTile(Tavern, pos)
+      case None =>
+        val fleeRoutes: Vector[Pos] = current.pos.neighbors.toVector.filter(p => board.at(p).exists(_.tile == Air))
+        val fleePositionedTiles: Vector[PositionedTile] = fleeRoutes flatMap board.at
+        val fleePaths: Vector[Path] = fleePositionedTiles map { f => pathfinder.multiGoalFind(Vector(enemy), f) }
 
-    maxPath(fleePaths) flatMap (_.current) getOrElse current
+        maxPath(fleePaths) flatMap (_.current) getOrElse current
+    }
   }
 
   private def maxPath(paths: Vector[Path]): Option[Path] = paths match {
